@@ -1,0 +1,3 @@
+package org.olgakhamzina.scientificlibrarythesis.utill
+
+interface Error
