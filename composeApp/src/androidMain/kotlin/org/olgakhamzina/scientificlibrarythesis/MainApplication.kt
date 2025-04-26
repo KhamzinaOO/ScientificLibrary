@@ -13,7 +13,6 @@ class MainApplication : Application() {
     }
 
     companion object {
-        // Global instance to be used for retrieving Context
         lateinit var instance: MainApplication
             private set
 

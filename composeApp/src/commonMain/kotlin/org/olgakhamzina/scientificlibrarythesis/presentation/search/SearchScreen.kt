@@ -48,9 +48,11 @@ fun FullSearchScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
 
+
     var query by remember { mutableStateOf("") }
     var isAdvancedVisible by remember { mutableStateOf(false) }
 
+    //TODO: provide through viewmodel
     var year by remember { mutableStateOf("") }
     var hindexFrom by remember { mutableStateOf("") }
     var hindexTo by remember { mutableStateOf("") }
@@ -58,7 +60,6 @@ fun FullSearchScreen(
     var citationsTo by remember { mutableStateOf("") }
     var openAccess by remember { mutableStateOf(false) }
 
-    // Локальные состояния для полей автодополнения
     var authorQuery by remember { mutableStateOf("") }
     val authorSuggestions by viewModel.authorSuggestions.collectAsState()
     var journalQuery by remember { mutableStateOf("") }
@@ -68,7 +69,6 @@ fun FullSearchScreen(
     var pubTypeQuery by remember { mutableStateOf("") }
     val pubTypeSuggestions by viewModel.pubTypeSuggestions.collectAsState()
 
-    // Диалог параметров ранжирования (scoring)
     val showDialog = remember { mutableStateOf(false) }
     val scoringParams by viewModel.params.collectAsState()
     val scoringError by viewModel.error.collectAsState()
@@ -110,7 +110,6 @@ fun FullSearchScreen(
                 )
                 Spacer(Modifier.height(8.dp))
             }
-            // Можно удалить общий ActiveFiltersRow, если фильтры будут отображаться отдельно под каждым полем
 
             item {
                 if (isAdvancedVisible) {
@@ -121,7 +120,7 @@ fun FullSearchScreen(
                             label = { Text("Year") },
                             modifier = Modifier.fillMaxWidth()
                         )
-                        // Поле для автора
+
                         AutocompleteTextField(
                             label = "Author",
                             query = authorQuery,
@@ -132,13 +131,13 @@ fun FullSearchScreen(
                                 authorQuery = ""
                             }
                         )
-                        // Отображение выбранных фильтров для автора
+
                         FilterChipsRow(
                             filterType = FilterType.AUTHOR,
                             activeFilters = viewModel.activeFilters,
                             onRemoveFilter = { viewModel.removeFilter(it) }
                         )
-                        // Поле для журнала
+
                         AutocompleteTextField(
                             label = "Journal",
                             query = journalQuery,
@@ -149,13 +148,13 @@ fun FullSearchScreen(
                                 journalQuery = ""
                             }
                         )
-                        // Отображение выбранных фильтров для журнала
+
                         FilterChipsRow(
                             filterType = FilterType.JOURNAL,
                             activeFilters = viewModel.activeFilters,
                             onRemoveFilter = { viewModel.removeFilter(it) }
                         )
-                        // Поле для площадки (venue)
+
                         AutocompleteTextField(
                             label = "Venue",
                             query = venueQuery,
@@ -166,13 +165,13 @@ fun FullSearchScreen(
                                 venueQuery = ""
                             }
                         )
-                        // Отображение выбранных фильтров для площадки
+
                         FilterChipsRow(
                             filterType = FilterType.VENUE,
                             activeFilters = viewModel.activeFilters,
                             onRemoveFilter = { viewModel.removeFilter(it) }
                         )
-                        // Поле для типа публикации
+
                         AutocompleteTextField(
                             label = "Publication Type",
                             query = pubTypeQuery,
@@ -183,7 +182,7 @@ fun FullSearchScreen(
                                 pubTypeQuery = ""
                             }
                         )
-                        // Отображение выбранных фильтров для типа публикации
+
                         FilterChipsRow(
                             filterType = FilterType.PUB_TYPE,
                             activeFilters = viewModel.activeFilters,
@@ -306,7 +305,6 @@ fun FullSearchScreen(
             }
         }
 
-        // Подгрузка дополнительных публикаций при достижении конца списка
         LaunchedEffect(listState) {
             snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
                 .collect { lastVisibleItemIndex ->
@@ -474,7 +472,7 @@ fun AutocompleteTextField(
             },
             label = { Text(label) },
             modifier = Modifier
-                .menuAnchor() // IMPORTANT: this anchors the menu below
+                .menuAnchor()
                 .fillMaxWidth(),
             singleLine = true
         )

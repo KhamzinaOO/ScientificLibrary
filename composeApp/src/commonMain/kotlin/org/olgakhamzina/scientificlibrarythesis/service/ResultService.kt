@@ -8,20 +8,19 @@ import org.olgakhamzina.scientificlibrarythesis.utill.Result
 
 class ResultService (private val apiClient: ApiClient) {
     suspend fun searchPublications(
+        //TODO: define as class
         query: String,
         page: Int = 1,
         pageSize: Int = 10,
         year: Int? = null,
         fields: List<String>? = null,
-        // Change these from String? to List<String>? to support multiple values:
         venue: List<String>? = null,
         authors: List<String>? = null,
         journals: List<String>? = null,
         pubTypes: List<String>? = null,
-        // affiliation is left as a single string (if it is meant to be a free text term)
         affiliation: String? = null,
-        dateFrom: String? = null, // format: yyyy-MM-dd
-        dateTo: String? = null,   // format: yyyy-MM-dd
+        dateFrom: String? = null,
+        dateTo: String? = null,
         citationsFrom: Int? = null,
         citationsTo: Int? = null,
         openAccess: Boolean? = null,

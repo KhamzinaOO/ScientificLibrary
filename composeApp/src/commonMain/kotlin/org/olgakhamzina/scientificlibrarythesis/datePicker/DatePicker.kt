@@ -45,8 +45,8 @@ import kotlinx.datetime.toLocalDateTime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NullableDatePicker(
-    selectedDate: LocalDate?,                // can be null
-    onDateChange: (LocalDate?) -> Unit,     // nullable change
+    selectedDate: LocalDate?,
+    onDateChange: (LocalDate?) -> Unit,
     labelText: String = "",
     modifier: Modifier = Modifier
 ) {
@@ -117,7 +117,6 @@ fun DatePickerBoxView(
                 .padding(vertical = 12.dp, horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Label + Date
             Column {
                 Text(
                     text = labelText,
@@ -133,7 +132,6 @@ fun DatePickerBoxView(
                 )
             }
 
-            // Action Row: Очистить + Calendar Icon
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

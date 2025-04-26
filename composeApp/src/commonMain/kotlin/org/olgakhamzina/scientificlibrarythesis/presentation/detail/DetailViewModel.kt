@@ -28,7 +28,7 @@ class PublicationDetailViewModel(
 
                 }
             } catch (e: Exception) {
-                // Handle error (e.g., set an error state)
+                //TODO: SnackBar to show message
                 e.printStackTrace()
             }
         }

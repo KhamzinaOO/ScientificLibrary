@@ -15,22 +15,19 @@ import org.olgakhamzina.scientificlibrarythesis.data.ScoringParams
 import org.olgakhamzina.scientificlibrarythesis.domain.PublicationRepository
 import org.olgakhamzina.scientificlibrarythesis.utill.Result
 
-// Define filter types (unchanged)
 enum class FilterType {
     AUTHOR, JOURNAL, VENUE, PUB_TYPE, YEAR
 }
 
-// Model for an active filter
 data class ActiveFilter(
     val type: FilterType,
     val value: String
 )
 
 class SearchViewModel(
-    private val repository: PublicationRepository // injected via Hilt or manually
+    private val repository: PublicationRepository
 ) : ViewModel() {
 
-    // Publication state
     private val _publications = MutableStateFlow<List<Publication>>(emptyList())
     val publications: StateFlow<List<Publication>> = _publications
 
@@ -45,11 +42,10 @@ class SearchViewModel(
     private var isLastPage = false
     private var lastFilters: SearchFilters? = null
 
-    // Updated SearchFilters with lists for multi-value filters
     data class SearchFilters(
         val query: String,
         val year: Int?,
-        val venues: List<String>?,       // Now a list instead of a single string
+        val venues: List<String>?,
         val authors: List<String>?,
         val journals: List<String>?,
         val pubTypes: List<String>?,
@@ -62,28 +58,23 @@ class SearchViewModel(
         val openAccess: Boolean?
     )
 
-    // List of active filters for the UI
     private val _activeFilters = mutableStateListOf<ActiveFilter>()
     val activeFilters: List<ActiveFilter> get() = _activeFilters
 
-    // Add a new filter (without duplicates)
     fun addFilter(filter: ActiveFilter) {
         if (_activeFilters.none { it.type == filter.type && it.value == filter.value }) {
             _activeFilters.add(filter)
         }
     }
 
-    // Remove a filter
     fun removeFilter(filter: ActiveFilter) {
         _activeFilters.remove(filter)
     }
 
-    // Method to launch search using base query, input parameters, and active filters.
-    // Note: The input parameters from the text fields are used as a fallback if there are no active filter chips.
     fun searchWithFilters(
         query: String,
         year: Int?,
-        venueInput: String?,   // fallback single-entry from text field
+        venueInput: String?,
         authorInput: String?,
         journalInput: String?,
         pubTypeInput: String?,
@@ -100,7 +91,6 @@ class SearchViewModel(
         isLastPage = false
         _publications.value = emptyList()
 
-        // Collect all active filters of each type from the UI chips.
         val activeAuthors = _activeFilters.filter { it.type == FilterType.AUTHOR }.map { it.value }
             .ifEmpty { authorInput?.takeIf { it.isNotBlank() }?.let { listOf(it) } ?: emptyList() }
         val activeJournals = _activeFilters.filter { it.type == FilterType.JOURNAL }.map { it.value }
@@ -142,10 +132,10 @@ class SearchViewModel(
                 page = currentPage,
                 pageSize = 10,
                 year = filters.year,
-                venues = filters.venues,        // Pass list of venues
-                authors = filters.authors,       // Pass list of authors
-                journals = filters.journals,     // Pass list of journals
-                pubTypes = filters.pubTypes,     // Pass list of publication types
+                venues = filters.venues,
+                authors = filters.authors,
+                journals = filters.journals,
+                pubTypes = filters.pubTypes,
                 hindexFrom = filters.hindexFrom,
                 hindexTo = filters.hindexTo,
                 citationsFrom = filters.citationsFrom,
@@ -170,7 +160,6 @@ class SearchViewModel(
         }
     }
 
-    // Scoring parameters and suggestion methods remain unchanged.
     private val _params = MutableStateFlow<ScoringParams?>(null)
     val params: StateFlow<ScoringParams?> = _params.asStateFlow()
 

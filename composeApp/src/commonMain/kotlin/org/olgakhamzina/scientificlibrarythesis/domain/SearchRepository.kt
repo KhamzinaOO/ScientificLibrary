@@ -12,15 +12,13 @@ interface PublicationRepository {
         pageSize: Int = 10,
         year: Int? = null,
         fields: List<String>? = null,
-        // Change these from String? to List<String>? to support multiple values:
         venues: List<String>? = null,
         authors: List<String>? = null,
         journals: List<String>? = null,
         pubTypes: List<String>? = null,
-        // affiliation is left as a single string (if it is meant to be a free text term)
         affiliation: String? = null,
-        dateFrom: String? = null, // format: yyyy-MM-dd
-        dateTo: String? = null,   // format: yyyy-MM-dd
+        dateFrom: String? = null, //yyyy-MM-dd
+        dateTo: String? = null,
         citationsFrom: Int? = null,
         citationsTo: Int? = null,
         openAccess: Boolean? = null,

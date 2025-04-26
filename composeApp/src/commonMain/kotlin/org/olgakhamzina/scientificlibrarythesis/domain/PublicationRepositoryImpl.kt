@@ -1,15 +1,13 @@
 package org.olgakhamzina.scientificlibrarythesis.domain
 
-import org.olgakhamzina.scientificlibrarythesis.data.FacetsResponse
 import org.olgakhamzina.scientificlibrarythesis.data.Publication
 import org.olgakhamzina.scientificlibrarythesis.data.ScoringParams
-import org.olgakhamzina.scientificlibrarythesis.network.ApiClient
 import org.olgakhamzina.scientificlibrarythesis.service.ResultService
 import org.olgakhamzina.scientificlibrarythesis.utill.NetworkError
 import org.olgakhamzina.scientificlibrarythesis.utill.Result
 
 class PublicationRepositoryImpl(
-    private val apiClient: ResultService // your custom client, e.g. Retrofit wrapper or ktor
+    private val apiClient: ResultService
 ) : PublicationRepository {
 
     override suspend fun searchPublications(
@@ -23,8 +21,8 @@ class PublicationRepositoryImpl(
         journals: List<String>?,
         pubTypes: List<String>?,
         affiliation: String?,
-        dateFrom: String?, // format: yyyy-MM-dd
-        dateTo: String?,   // format: yyyy-MM-dd
+        dateFrom: String?, //yyyy-MM-dd
+        dateTo: String?,
         citationsFrom: Int?,
         citationsTo: Int?,
         openAccess: Boolean?,

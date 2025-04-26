@@ -58,7 +58,7 @@ kotlin {
 
             implementation(libs.bundles.ktor)
 
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
+            implementation(libs.kotlinx.datetime)
         }
 
         nativeMain.dependencies {

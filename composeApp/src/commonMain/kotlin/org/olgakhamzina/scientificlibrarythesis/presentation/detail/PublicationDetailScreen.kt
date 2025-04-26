@@ -19,7 +19,7 @@ fun PublicationDetailScreen(
 ) {
 
     val viewModel : PublicationDetailViewModel = koinViewModel()
-    // Load publication details on first composition.
+
     LaunchedEffect(key1 = paperId) {
         viewModel.loadPublication(paperId)
     }
@@ -61,7 +61,7 @@ fun PublicationDetailContent(publication: PublicationDetail) {
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = "Abstract", style = MaterialTheme.typography.subtitle1)
         publication.abstract?.let { Text(text = it, style = MaterialTheme.typography.body1) }
-        // You can add more fields such as TLDR, fields, publication types etc.
+
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = "TLDR: ${publication.tldr}", style = MaterialTheme.typography.body2)
         Spacer(modifier = Modifier.height(16.dp))
@@ -69,7 +69,7 @@ fun PublicationDetailContent(publication: PublicationDetail) {
         if (!publication.openAccessPdfUrl.isNullOrBlank()) {
             Button(
                 onClick = {
-                    // If an open access PDF URL is provided, open it.
+
                     if (publication.openAccessPdfUrl.isNotBlank()) {
                         openPdf(publication.openAccessPdfUrl)
                     }
