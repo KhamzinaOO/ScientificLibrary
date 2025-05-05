@@ -6,11 +6,12 @@ import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinContext
 import org.olgakhamzina.scientificlibrarythesis.navigation.NavGraph
+import org.olgakhamzina.scientificlibrarythesis.ui.AppTheme
 
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
+    AppTheme {
         KoinContext {
             val navController = rememberNavController()
             NavGraph(

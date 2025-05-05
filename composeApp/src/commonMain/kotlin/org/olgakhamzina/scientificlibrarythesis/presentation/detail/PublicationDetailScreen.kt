@@ -3,82 +3,135 @@ package org.olgakhamzina.scientificlibrarythesis.presentation.detail
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 import org.olgakhamzina.scientificlibrarythesis.data.PublicationDetail
+import org.olgakhamzina.scientificlibrarythesis.ui.Dimensions.LargePadding
+import org.olgakhamzina.scientificlibrarythesis.ui.Dimensions.MediumPadding
+import org.olgakhamzina.scientificlibrarythesis.ui.Dimensions.SmallPadding
 
 @Composable
 fun PublicationDetailScreen(
     paperId: String,
     onBack: () -> Unit
 ) {
+    val viewModel: PublicationDetailViewModel = koinViewModel()
+    val state by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    val viewModel : PublicationDetailViewModel = koinViewModel()
-
-    LaunchedEffect(key1 = paperId) {
-        viewModel.loadPublication(paperId)
+    LaunchedEffect(viewModel.effect) {
+        viewModel.effect.collectLatest { effect ->
+            if (effect is PublicationDetailContract.UiEffect.ShowError) {
+                snackbarHostState.showSnackbar(effect.message)
+            }
+        }
     }
 
-    val publication by viewModel.publicationDetail.collectAsState()
+    LaunchedEffect(paperId) {
+        viewModel.onEvent(PublicationDetailContract.UiEvent.LoadPublication(paperId))
+    }
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Publication Detail") }, navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back")
+            androidx.compose.material.TopAppBar(
+                backgroundColor = MaterialTheme.colorScheme.primary
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                    ,
+                    verticalAlignment = Alignment.CenterVertically,
+                    ){
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                    Text(
+                        text = "Publication Detail",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        style = MaterialTheme.typography.titleLarge
+                    )
                 }
-            })
-        }
-    ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            if (publication == null) {
-                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-            } else {
-                PublicationDetailContent(publication = publication!!)
+            }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                state.isLoading -> {
+                    CircularProgressIndicator()
+                }
+
+                state.errorMessage != null -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(state.errorMessage!!)
+                    }
+                }
+
+                state.publication != null -> {
+                    PublicationDetailContent(publication = state.publication!!)
+                }
             }
         }
     }
 }
 
 @Composable
-fun PublicationDetailContent(publication: PublicationDetail) {
-    Column(modifier = Modifier
-        .padding(16.dp)
-        .verticalScroll(rememberScrollState())
+private fun PublicationDetailContent(publication: PublicationDetail) {
+    Column(
+        Modifier
+            .padding(LargePadding)
+            .verticalScroll(rememberScrollState())
     ) {
-        publication.title?.let { Text(text = it, style = MaterialTheme.typography.h5) }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "Journal: ${publication.journal}", style = MaterialTheme.typography.body1)
-        Text(text = "Venue: ${publication.venue}", style = MaterialTheme.typography.body2)
-        Text(text = "Published in ${publication.year}", style = MaterialTheme.typography.body2)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "Authors: ${publication.authors}", style = MaterialTheme.typography.body2)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "Abstract", style = MaterialTheme.typography.subtitle1)
-        publication.abstract?.let { Text(text = it, style = MaterialTheme.typography.body1) }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = "TLDR: ${publication.tldr}", style = MaterialTheme.typography.body2)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (!publication.openAccessPdfUrl.isNullOrBlank()) {
-            Button(
-                onClick = {
-
-                    if (publication.openAccessPdfUrl.isNotBlank()) {
-                        openPdf(publication.openAccessPdfUrl)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Open PDF")
-            }
+        publication.title?.let {
+            Text(text = it)
         }
+        Spacer(Modifier.height(MediumPadding))
+        Text("Journal: ${publication.journal}")
+        Text("Venue: ${publication.venue}")
+        Text("Published in ${publication.year}")
+        Spacer(Modifier.height(MediumPadding))
+        Text("Authors: ${publication.authors}")
+        Spacer(Modifier.height(LargePadding))
+
+        publication.abstract?.let {
+            Text("Abstract")
+            Spacer(Modifier.height(SmallPadding))
+            Text(it,)
+            Spacer(Modifier.height(LargePadding))
+        }
+
+        publication.tldr?.let {
+            Text("TLDR: $it",)
+            Spacer(Modifier.height(LargePadding))
+        }
+
+        publication.openAccessPdfUrl
+            ?.takeIf(String::isNotBlank)
+            ?.let { url ->
+                Button(
+                    onClick = { openPdf(url) },
+                    Modifier.fillMaxWidth()
+                ) {
+                    Text("Open PDF")
+                }
+            }
     }
 }
 

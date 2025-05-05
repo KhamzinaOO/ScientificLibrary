@@ -1,29 +1,35 @@
 package org.olgakhamzina.scientificlibrarythesis.presentation.search
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.SnackbarHost
+import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
@@ -31,333 +37,314 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.datetime.LocalDate
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
+import org.olgakhamzina.scientificlibrarythesis.data.Publication
 import org.olgakhamzina.scientificlibrarythesis.data.ScoringParams
 import org.olgakhamzina.scientificlibrarythesis.datePicker.NullableDatePicker
-import org.olgakhamzina.scientificlibrarythesis.datePicker.formatDate
+import org.olgakhamzina.scientificlibrarythesis.presentation.detail.PublicationDetailContract
+import org.olgakhamzina.scientificlibrarythesis.presentation.search.SearchContract.UiEvent
+import org.olgakhamzina.scientificlibrarythesis.ui.Dimensions.LargePadding
+import org.olgakhamzina.scientificlibrarythesis.ui.Dimensions.MediumPadding
+import org.olgakhamzina.scientificlibrarythesis.ui.Dimensions.SmallPadding
 
 @Composable
 fun FullSearchScreen(
     onPublicationSelected: (String) -> Unit
 ) {
     val viewModel: SearchViewModel = koinViewModel()
-    val publications by viewModel.publications.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val error by viewModel.errorMessage.collectAsState()
-
-
-    var query by remember { mutableStateOf("") }
-    var isAdvancedVisible by remember { mutableStateOf(false) }
-
-    //TODO: provide through viewmodel
-    var year by remember { mutableStateOf("") }
-    var hindexFrom by remember { mutableStateOf("") }
-    var hindexTo by remember { mutableStateOf("") }
-    var citationsFrom by remember { mutableStateOf("") }
-    var citationsTo by remember { mutableStateOf("") }
-    var openAccess by remember { mutableStateOf(false) }
-
-    var authorQuery by remember { mutableStateOf("") }
-    val authorSuggestions by viewModel.authorSuggestions.collectAsState()
-    var journalQuery by remember { mutableStateOf("") }
-    val journalSuggestions by viewModel.journalSuggestions.collectAsState()
-    var venueQuery by remember { mutableStateOf("") }
-    val venueSuggestions by viewModel.venueSuggestions.collectAsState()
-    var pubTypeQuery by remember { mutableStateOf("") }
-    val pubTypeSuggestions by viewModel.pubTypeSuggestions.collectAsState()
-
-    val showDialog = remember { mutableStateOf(false) }
-    val scoringParams by viewModel.params.collectAsState()
-    val scoringError by viewModel.error.collectAsState()
-
-    var dateFrom: LocalDate? by remember { mutableStateOf(null) }
-    var dateTo: LocalDate? by remember { mutableStateOf(null) }
-
+    val state by viewModel.uiState.collectAsState()
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        LazyColumn(
-            state = listState,
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(viewModel.effect) {
+        viewModel.effect.collectLatest { effect ->
+            if (effect is PublicationDetailContract.UiEffect.ShowError) {
+                snackbarHostState.showSnackbar(effect.message)
+            }
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { padding ->
+        Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .clickable(
                     onClick = { focusManager.clearFocus() },
                     interactionSource = MutableInteractionSource(),
                     indication = null
                 )
-                .padding( horizontal = 16.dp)
         ) {
-            item {
-                Button(onClick = {
-                    viewModel.loadParams()
-                    showDialog.value = true
-                }) {
-                    Text("Adjust Parameters")
-                }
-            }
-            item {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text("Search query") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(8.dp))
-            }
-
-            item {
-                if (isAdvancedVisible) {
-                    Column {
-                        OutlinedTextField(
-                            value = year,
-                            onValueChange = { year = it },
-                            label = { Text("Year") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        AutocompleteTextField(
-                            label = "Author",
-                            query = authorQuery,
-                            onQueryChange = { authorQuery = it; viewModel.fetchSuggestions("author", it) },
-                            suggestions = authorSuggestions ?: emptyList(),
-                            onSuggestionSelected = { selected ->
-                                viewModel.addFilter(ActiveFilter(FilterType.AUTHOR, selected))
-                                authorQuery = ""
-                            }
-                        )
-
-                        FilterChipsRow(
-                            filterType = FilterType.AUTHOR,
-                            activeFilters = viewModel.activeFilters,
-                            onRemoveFilter = { viewModel.removeFilter(it) }
-                        )
-
-                        AutocompleteTextField(
-                            label = "Journal",
-                            query = journalQuery,
-                            onQueryChange = { journalQuery = it; viewModel.fetchSuggestions("journal", it) },
-                            suggestions = journalSuggestions ?: emptyList(),
-                            onSuggestionSelected = { selected ->
-                                viewModel.addFilter(ActiveFilter(FilterType.JOURNAL, selected))
-                                journalQuery = ""
-                            }
-                        )
-
-                        FilterChipsRow(
-                            filterType = FilterType.JOURNAL,
-                            activeFilters = viewModel.activeFilters,
-                            onRemoveFilter = { viewModel.removeFilter(it) }
-                        )
-
-                        AutocompleteTextField(
-                            label = "Venue",
-                            query = venueQuery,
-                            onQueryChange = { venueQuery = it; viewModel.fetchSuggestions("venue", it) },
-                            suggestions = venueSuggestions ?: emptyList(),
-                            onSuggestionSelected = { selected ->
-                                viewModel.addFilter(ActiveFilter(FilterType.VENUE, selected))
-                                venueQuery = ""
-                            }
-                        )
-
-                        FilterChipsRow(
-                            filterType = FilterType.VENUE,
-                            activeFilters = viewModel.activeFilters,
-                            onRemoveFilter = { viewModel.removeFilter(it) }
-                        )
-
-                        AutocompleteTextField(
-                            label = "Publication Type",
-                            query = pubTypeQuery,
-                            onQueryChange = { pubTypeQuery = it; viewModel.fetchSuggestions("pubType", it) },
-                            suggestions = pubTypeSuggestions ?: emptyList(),
-                            onSuggestionSelected = { selected ->
-                                viewModel.addFilter(ActiveFilter(FilterType.PUB_TYPE, selected))
-                                pubTypeQuery = ""
-                            }
-                        )
-
-                        FilterChipsRow(
-                            filterType = FilterType.PUB_TYPE,
-                            activeFilters = viewModel.activeFilters,
-                            onRemoveFilter = { viewModel.removeFilter(it) }
-                        )
-                        Row {
-                            OutlinedTextField(
-                                value = hindexFrom,
-                                onValueChange = { hindexFrom = it },
-                                label = { Text("H-Index From") },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 8.dp)
-                            )
-                            OutlinedTextField(
-                                value = hindexTo,
-                                onValueChange = { hindexTo = it },
-                                label = { Text("H-Index To") },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        Row {
-                            OutlinedTextField(
-                                value = citationsFrom,
-                                onValueChange = { citationsFrom = it },
-                                label = { Text("Citations From") },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 8.dp)
-                            )
-                            OutlinedTextField(
-                                value = citationsTo,
-                                onValueChange = { citationsTo = it },
-                                label = { Text("Citations To") },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        Row {
-                            NullableDatePicker(
-                                selectedDate = dateFrom,
-                                onDateChange = { dateFrom = it },
-                                labelText = "Date From",
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 8.dp)
-                            )
-                            NullableDatePicker(
-                                selectedDate = dateTo,
-                                onDateChange = { dateTo = it },
-                                labelText = "Date To",
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = openAccess, onCheckedChange = { openAccess = it })
-                            Text("Open Access", fontSize = 14.sp)
-                        }
-                    }
-                }
-            }
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    TextButton(onClick = { isAdvancedVisible = !isAdvancedVisible }) {
-                        Text(if (isAdvancedVisible) "Hide Filters ▲" else "Show Filters ▼")
-                    }
-                    Button(onClick = {
-                        viewModel.searchWithFilters(
-                            query = query,
-                            year = year.toIntOrNull(),
-                            venueInput = venueQuery.takeIf { it.isNotBlank() },
-                            authorInput = authorQuery.takeIf { it.isNotBlank() },
-                            journalInput = journalQuery.takeIf { it.isNotBlank() },
-                            pubTypeInput = pubTypeQuery.takeIf { it.isNotBlank() },
-                            hindexFrom = hindexFrom.toDoubleOrNull(),
-                            hindexTo = hindexTo.toDoubleOrNull(),
-                            citationsFrom = citationsFrom.toIntOrNull(),
-                            citationsTo = citationsTo.toIntOrNull(),
-                            dateFrom = dateFrom?.formatDate(),
-                            dateTo = dateTo?.formatDate(),
-                            openAccess = if (openAccess) openAccess else null
-                        )
-                    }) {
-                        Text("Search")
-                    }
-                }
-            }
-            item {
-                Spacer(Modifier.height(16.dp))
-            }
-            items(publications) { pub ->
-                Card(
-                    modifier = Modifier
-                        .clickable(onClick = { onPublicationSelected(pub.paperId) })
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    elevation = CardDefaults.cardElevation(4.dp)
-                ) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text(pub.title, style = MaterialTheme.typography.titleLarge)
-                        Text("Authors: ${pub.authors}")
-                        Text("Venue: ${pub.venue}")
-                        Text("Journal: ${pub.journal}")
-                        Text("Year: ${pub.year}")
-                        Text("Citations: ${pub.citationCount}")
-                        Text("H-Index: ${pub.avgHIndex}")
-                        Text("Score: ${pub.score}")
-                    }
-                }
-            }
-            if (isLoading) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .padding(horizontal = LargePadding)
+            ) {
                 item {
-                    Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                    Button(
+                        shape = MaterialTheme.shapes.small,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.outline
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        onClick = { viewModel.onEvent(UiEvent.AdjustParamsClicked) })
+                    {
+                        Text("Adjust Parameters")
+                    }
+                }
+                item {
+                    OutlinedTextField(
+                        value = state.query,
+                        onValueChange = { viewModel.onEvent(UiEvent.QueryChanged(it)) },
+                        label = { Text("Search query") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(MediumPadding))
+                }
+                if (state.isAdvancedVisible) {
+                    item {
+                        AdvancedFilters(state = state, onEvent = viewModel::onEvent)
+                    }
+                }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        TextButton(onClick = { viewModel.onEvent(UiEvent.ToggleAdvancedSection) }) {
+                            Text(if (state.isAdvancedVisible) "Hide Filters ▲" else "Show Filters ▼")
+                        }
+                        Button(onClick = { viewModel.onEvent(UiEvent.SearchClicked) }) {
+                            Text("Search")
+                        }
+                    }
+                }
+                items(state.publications) { pub: Publication ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = SmallPadding)
+                            .clickable { onPublicationSelected(pub.paperId) },
+                        elevation = CardDefaults.cardElevation(SmallPadding)
+                    ) {
+                        Column(Modifier.padding(LargePadding)) {
+                            Text(pub.title, style = MaterialTheme.typography.titleLarge)
+                            Text("Authors: ${pub.authors}")
+                            Text("Venue: ${pub.venue}")
+                            Text("Journal: ${pub.journal}")
+                            Text("Year: ${pub.year}")
+                            Text("Citations: ${pub.citationCount}")
+                            Text("H-Index: ${pub.avgHIndex}")
+                            Text("Score: ${pub.score}")
+                        }
+                    }
+                }
+                if (state.isLoading) {
+                    item {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(LargePadding),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
                 }
             }
-        }
 
-        LaunchedEffect(listState) {
-            snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-                .collect { lastVisibleItemIndex ->
-                    if (lastVisibleItemIndex == publications.lastIndex && !isLoading) {
-                        viewModel.loadMore()
+            LaunchedEffect(listState) {
+                snapshotFlow {
+                    listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+                }.collect { idx ->
+                    if (idx == state.publications.lastIndex && !state.isLoading) {
+                        viewModel.onEvent(UiEvent.LoadMore)
                     }
                 }
+            }
         }
     }
 
-    if (showDialog.value && scoringParams != null) {
-        ScoringParamsDialog(
-            params = scoringParams!!,
-            onDismiss = { showDialog.value = false },
-            onUpdateAll = { value -> viewModel.updateAllParams(value) }
+    if (state.isParamsDialogOpen) {
+        state.scoringParams?.let { params ->
+            ScoringParamsDialog(
+                params = params,
+                onDismiss = { viewModel.onEvent(UiEvent.DismissParamsDialog) },
+                onUpdateAll = { viewModel.onEvent(UiEvent.UpdateAllParams(it)) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun AdvancedFilters(
+    state: SearchContract.UiState,
+    onEvent: (UiEvent) -> Unit
+) {
+    Column {
+        OutlinedTextField(
+            value = state.year,
+            onValueChange = { onEvent(UiEvent.YearChanged(it)) },
+            label = { Text("Year") },
+            modifier = Modifier.fillMaxWidth()
         )
+        AutocompleteTextField(
+            label = "Author",
+            query = state.authorQuery,
+            onQueryChange = { onEvent(UiEvent.AuthorQueryChanged(it)) },
+            suggestions = state.authorSuggestions,
+            onSuggestionSelected = { onEvent(UiEvent.SuggestionSelected("author", it)) }
+        )
+        FilterChipsGrid(
+            filterType = FilterType.AUTHOR,
+            activeFilters = state.activeFilters,
+            onRemoveFilter = { onEvent(UiEvent.RemoveFilter(it)) }
+        )
+        AutocompleteTextField(
+            label = "Journal",
+            query = state.journalQuery,
+            onQueryChange = { onEvent(UiEvent.JournalQueryChanged(it)) },
+            suggestions = state.journalSuggestions,
+            onSuggestionSelected = { onEvent(UiEvent.SuggestionSelected("journal", it)) }
+        )
+        FilterChipsGrid(
+            filterType = FilterType.JOURNAL,
+            activeFilters = state.activeFilters,
+            onRemoveFilter = { onEvent(UiEvent.RemoveFilter(it)) }
+        )
+        AutocompleteTextField(
+            label = "Venue",
+            query = state.venueQuery,
+            onQueryChange = { onEvent(UiEvent.VenueQueryChanged(it)) },
+            suggestions = state.venueSuggestions,
+            onSuggestionSelected = { onEvent(UiEvent.SuggestionSelected("venue", it)) }
+        )
+        FilterChipsGrid(
+            filterType = FilterType.VENUE,
+            activeFilters = state.activeFilters,
+            onRemoveFilter = { onEvent(UiEvent.RemoveFilter(it)) }
+        )
+        AutocompleteTextField(
+            label = "Publication Type",
+            query = state.pubTypeQuery,
+            onQueryChange = { onEvent(UiEvent.PubTypeQueryChanged(it)) },
+            suggestions = state.pubTypeSuggestions,
+            onSuggestionSelected = { onEvent(UiEvent.SuggestionSelected("pubType", it)) }
+        )
+        FilterChipsGrid(
+            filterType = FilterType.PUB_TYPE,
+            activeFilters = state.activeFilters,
+            onRemoveFilter = { onEvent(UiEvent.RemoveFilter(it)) }
+        )
+        Row {
+            OutlinedTextField(
+                value = state.hindexFrom,
+                onValueChange = { onEvent(UiEvent.HIndexFromChanged(it)) },
+                label = { Text("H-Index From") },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = MediumPadding)
+            )
+            OutlinedTextField(
+                value = state.hindexTo,
+                onValueChange = { onEvent(UiEvent.HIndexToChanged(it)) },
+                label = { Text("H-Index To") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Row {
+            OutlinedTextField(
+                value = state.citationsFrom,
+                onValueChange = { onEvent(UiEvent.CitationsFromChanged(it)) },
+                label = { Text("Citations From") },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = MediumPadding)
+            )
+            OutlinedTextField(
+                value = state.citationsTo,
+                onValueChange = { onEvent(UiEvent.CitationsToChanged(it)) },
+                label = { Text("Citations To") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Row {
+            NullableDatePicker(
+                selectedDate = state.dateFrom,
+                onDateChange = { onEvent(UiEvent.DateFromChanged(it)) },
+                labelText = "Date From",
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = MediumPadding)
+            )
+            NullableDatePicker(
+                selectedDate = state.dateTo,
+                onDateChange = { onEvent(UiEvent.DateToChanged(it)) },
+                labelText = "Date To",
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(
+                checked = state.openAccess,
+                onCheckedChange = { onEvent(UiEvent.OpenAccessToggled) }
+            )
+            Text("Open Access", fontSize = 14.sp)
+        }
     }
 }
 
 
 @Composable
-fun FilterChipsRow(
+fun FilterChipsGrid(
     filterType: FilterType,
     activeFilters: List<ActiveFilter>,
     onRemoveFilter: (ActiveFilter) -> Unit
 ) {
     val filtersForType = activeFilters.filter { it.type == filterType }
-    if (filtersForType.isNotEmpty()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 4.dp, top = 4.dp),
-            horizontalArrangement = Arrangement.Start
-        ) {
-            filtersForType.forEach { filter ->
-                Card(
-                    modifier = Modifier
-                        .padding(end = 4.dp)
-                        .clickable { onRemoveFilter(filter) },
-                    elevation = CardDefaults.cardElevation(4.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(text = filter.value)
-                        Spacer(modifier = Modifier.width(4.dp))
+    if (filtersForType.isEmpty()) return
 
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            "Delete"
-                        )
-                    }
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 120.dp),
+        contentPadding = PaddingValues(horizontal = SmallPadding),
+        horizontalArrangement = Arrangement.spacedBy(SmallPadding),
+        verticalArrangement = Arrangement.spacedBy(SmallPadding),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 150.dp),
+    ) {
+        items(filtersForType) { filter ->
+            Card(
+                modifier = Modifier
+                    .clickable { onRemoveFilter(filter) },
+                elevation = CardDefaults.cardElevation(SmallPadding)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(horizontal = MediumPadding, vertical = SmallPadding)
+                ) {
+                    Text(
+                        text = filter.value,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(SmallPadding))
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Remove"
+                    )
                 }
             }
         }
@@ -388,7 +375,7 @@ fun ScoringParamsDialog(
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(MediumPadding))
                 OutlinedTextField(
                     value = lambda,
                     onValueChange = { lambda = it },
@@ -396,7 +383,7 @@ fun ScoringParamsDialog(
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(MediumPadding))
                 OutlinedTextField(
                     value = alpha,
                     onValueChange = { alpha = it },
@@ -404,7 +391,7 @@ fun ScoringParamsDialog(
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(MediumPadding))
                 OutlinedTextField(
                     value = beta,
                     onValueChange = { beta = it },
@@ -412,7 +399,7 @@ fun ScoringParamsDialog(
                     keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(MediumPadding))
                 OutlinedTextField(
                     value = gamma,
                     onValueChange = { gamma = it },
