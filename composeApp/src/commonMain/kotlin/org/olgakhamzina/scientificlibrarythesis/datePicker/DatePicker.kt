@@ -41,6 +41,9 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import org.olgakhamzina.scientificlibrarythesis.ui.Dimensions
+import org.olgakhamzina.scientificlibrarythesis.ui.Dimensions.LargePadding
+import org.olgakhamzina.scientificlibrarythesis.ui.Dimensions.SmallPadding
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -108,14 +111,14 @@ fun DatePickerBoxView(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(vertical = 4.dp),
+            .padding(vertical = SmallPadding),
         border = CardDefaults.outlinedCardBorder(true)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp, horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(LargePadding),
+            verticalArrangement = Arrangement.spacedBy(LargePadding)
         ) {
             Column {
                 Text(
@@ -123,7 +126,7 @@ fun DatePickerBoxView(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(SmallPadding))
                 Text(
                     text = if (formattedDate.isNotEmpty()) formattedDate else "Выберите дату",
                     color = MaterialTheme.colorScheme.primary,
