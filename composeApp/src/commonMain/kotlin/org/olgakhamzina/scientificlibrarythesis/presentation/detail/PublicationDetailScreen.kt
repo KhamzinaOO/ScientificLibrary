@@ -65,11 +65,12 @@ fun PublicationDetailScreen(
             }
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) {
+    ) { paddingValues ->
         Box(
             modifier = Modifier
+                .padding(paddingValues)
                 .fillMaxSize(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.TopCenter
         ) {
             when {
                 state.isLoading -> {

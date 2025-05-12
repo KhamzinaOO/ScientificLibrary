@@ -69,7 +69,6 @@ class SearchViewModel(
 
             is UiEvent.QueryChanged -> {
                 _uiState.update { it.copy(query = event.query) }
-                suggestionsJob?.cancel()
                 suggestionsJob = viewModelScope.launch(Dispatchers.IO) {
                     requestSuggestionsInternal("general", event.query)
                 }
