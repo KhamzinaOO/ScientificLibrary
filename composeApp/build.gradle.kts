@@ -33,9 +33,9 @@ kotlin {
 
     sourceSets {
 
+
         val commonMain by getting {
             dependencies {
-                implementation(project(":shared"))
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material)
@@ -71,19 +71,25 @@ kotlin {
                 implementation(compose.desktop.currentOs)
                 implementation(libs.kotlinx.coroutines.swing)
                 implementation(libs.ktor.client.okhttp)
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.10.1")
+                implementation("org.jetbrains.skiko:skiko-awt-runtime-macos-arm64:0.8.18")
+                implementation("ch.qos.logback:logback-classic:1.4.14")
+
             }
         }
 
         val nativeMain by creating {
             dependsOn(commonMain)
-            dependencies {
-                implementation(libs.ktor.client.darwin)
-            }
+            dependencies { implementation(libs.ktor.client.darwin) }
         }
 
-        val iosX64Main by getting { dependsOn(nativeMain) }
-        val iosArm64Main by getting { dependsOn(nativeMain) }
-        val iosSimulatorArm64Main by getting { dependsOn(nativeMain) }
+        val iosMain by creating {
+            dependsOn(nativeMain)
+        }
+
+        val iosX64Main by getting { dependsOn(iosMain) }
+        val iosArm64Main by getting { dependsOn(iosMain) }
+        val iosSimulatorArm64Main by getting { dependsOn(iosMain) }
     }
 }
 

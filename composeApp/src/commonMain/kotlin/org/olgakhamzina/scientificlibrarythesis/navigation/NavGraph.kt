@@ -25,7 +25,7 @@ fun NavGraph(
 
     composable<Destination.PublicationDetail>{
         val args = it.toRoute<Destination.PublicationDetail>()
-        PublicationDetailScreen(args.paperId) { navController.popBackStack() }
+        PublicationDetailScreen(paperId = args.paperId
+        ) { navController.popBackStack() }
     }
-
 }

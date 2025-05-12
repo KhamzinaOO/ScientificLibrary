@@ -2,6 +2,7 @@ package org.olgakhamzina.scientificlibrarythesis.presentation.search
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material.SnackbarHost
@@ -36,6 +38,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -57,7 +60,6 @@ fun FullSearchScreen(
 ) {
     val viewModel: SearchViewModel = koinViewModel()
     val state by viewModel.uiState.collectAsState()
-    val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -73,15 +75,16 @@ fun FullSearchScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
+        val focusManager = LocalFocusManager.current
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .clickable(
                     onClick = { focusManager.clearFocus() },
                     interactionSource = MutableInteractionSource(),
                     indication = null
                 )
+                .padding(padding)
         ) {
             LazyColumn(
                 state = listState,
@@ -106,6 +109,12 @@ fun FullSearchScreen(
                         value = state.query,
                         onValueChange = { viewModel.onEvent(UiEvent.QueryChanged(it)) },
                         label = { Text("Search query") },
+                        singleLine = false,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions { focusManager.clearFocus() },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(MediumPadding))
@@ -458,10 +467,10 @@ fun AutocompleteTextField(
                 expanded = true
             },
             label = { Text(label) },
+            singleLine = true,
             modifier = Modifier
                 .menuAnchor()
-                .fillMaxWidth(),
-            singleLine = true
+                .fillMaxWidth()
         )
 
         ExposedDropdownMenu(
