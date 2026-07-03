@@ -1,6 +1,6 @@
-package org.olgakhamzina.scientificlibrarythesis.domain
+package org.olgakhamzina.scientificlibrarythesis.data
 
-import org.olgakhamzina.scientificlibrarythesis.data.PublicationDetail
+import org.olgakhamzina.scientificlibrarythesis.domain.PublicationDetailRepository
 import org.olgakhamzina.scientificlibrarythesis.service.DetailService
 import org.olgakhamzina.scientificlibrarythesis.utill.NetworkError
 import org.olgakhamzina.scientificlibrarythesis.utill.Result

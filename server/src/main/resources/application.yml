@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/semantic_scholar_db
+    username: olga
+    password: 12345678
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+
+app:
+  bm25:
+    k: 1.5             # BM25 параметр k (по умолчанию 1.5)
+    b: 0.75            # BM25 параметр b (по умолчанию 0.75)
+  stemLanguage: english  # Язык для стемминга (например, english или russian)
