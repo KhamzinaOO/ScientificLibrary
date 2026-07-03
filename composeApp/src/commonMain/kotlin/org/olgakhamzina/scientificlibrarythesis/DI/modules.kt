@@ -7,9 +7,9 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.olgakhamzina.scientificlibrarythesis.domain.PublicationDetailRepository
-import org.olgakhamzina.scientificlibrarythesis.domain.PublicationDetailRepositoryImpl
+import org.olgakhamzina.scientificlibrarythesis.data.PublicationDetailRepositoryImpl
 import org.olgakhamzina.scientificlibrarythesis.domain.PublicationRepository
-import org.olgakhamzina.scientificlibrarythesis.domain.PublicationRepositoryImpl
+import org.olgakhamzina.scientificlibrarythesis.data.PublicationRepositoryImpl
 import org.olgakhamzina.scientificlibrarythesis.network.ApiClient
 import org.olgakhamzina.scientificlibrarythesis.network.createHttpClient
 import org.olgakhamzina.scientificlibrarythesis.presentation.detail.PublicationDetailViewModel

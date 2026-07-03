@@ -37,7 +37,7 @@ fun createHttpClient(engine: HttpClientEngine) : HttpClient{
         install(DefaultRequest){
             url{
                 protocol = URLProtocol.HTTP
-                host = "192.168.1.72"
+                host = "10.0.2.2"
                 port = 8080
             }
         }
