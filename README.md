@@ -113,5 +113,6 @@ $$
 По умолчанию сервер ожидает базу данных **semantic_scholar_db**.
 
 Клиент обращается к серверу по адресу, заданному в файле:
-`composeApp/src/commonMain/kotlin/org/olgakhamzina/scientificlibrarythesis/network/createHttpClient.kt`
+`composeApp/src/commonMain/kotlin/org/olgakhamzina/scientificlibrarythesis/network/createHttpClient.kt`.
+
 Сейчас там указан host 10.0.2.2, адрес при необходимости нужно заменить на доступный адрес сервера.
